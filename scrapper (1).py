@@ -156,10 +156,17 @@ projects_wiki_corr = repos_df['has_projects'].astype(bool).corr(repos_df['has_wi
 print(f"Correlation between projects and wiki enabled: {projects_wiki_corr:.3f}")
 
 # 12. Difference in average following for hireable vs. non-hireable users
-hireable_avg_following = users_df[users_df['hireable'] == 'True']['following'].mean()
-non_hireable_avg_following = users_df[users_df['hireable'] != 'True']['following'].mean()
+# Ensure 'hireable' column is boolean (treat empty values as False)
+users_df['hireable'] = users_df['hireable'].fillna('').astype(str).str.lower().map({'true': True, 'false': False}).fillna(False)
+
+# Calculate the average 'following' for hireable and non-hireable users
+hireable_avg_following = users_df[users_df['hireable'] == True]['following'].mean()
+non_hireable_avg_following = users_df[users_df['hireable'] == False]['following'].mean()
+
+# Calculate the difference
 following_difference = hireable_avg_following - non_hireable_avg_following
 print(f"Difference in average following (hireable vs. non-hireable): {following_difference:.3f}")
+
 
 # 13. Regression slope: followers vs. bio word count (ignore empty bios)
 users_df['bio_word_count'] = users_df['bio'].fillna('').str.split().apply(len)
@@ -174,52 +181,24 @@ top_5_weekend_users = weekend_repos_count.nlargest(5).index.tolist()
 print("Top 5 users by repos created on weekends:", ', '.join(top_5_weekend_users))
 
 # 15. Do hireable users share emails more often?
-hireable_with_email = users_df[users_df['hireable'] == 'True']['email'].notna().mean()
-non_hireable_with_email = users_df[users_df['hireable'] != 'True']['email'].notna().mean()
+# Ensure 'hireable' column is boolean
+users_df['hireable'] = users_df['hireable'].fillna('').astype(str).str.lower().map({'true': True, 'false': False}).fillna(False)
+# Count the fraction of users with email addresses for hireable and non-hireable users
+hireable_with_email = users_df[users_df['hireable'] == True]['email'].notna().mean()
+non_hireable_with_email = users_df[users_df['hireable'] == False]['email'].notna().mean()
+# Calculate the difference
 email_fraction_difference = hireable_with_email - non_hireable_with_email
 print(f"Difference in email sharing (hireable vs. non-hireable): {email_fraction_difference:.3f}")
 
 # 16. Most common surname (last word in the name, ignore missing names)
 users_df['surname'] = users_df['name'].fillna('').str.split().str[-1]
-most_common_surnames = users_df['surname'].value_counts()
-max_count = most_common_surnames.max()
-common_surnames = most_common_surnames[most_common_surnames == max_count].index.tolist()
-print("Most common surname(s):", ', '.join(sorted(common_surnames)))
-
-# Ensure 'hireable' column is boolean (treat empty values as False)
-users_df['hireable'] = users_df['hireable'].fillna('').astype(str).str.lower().map({'true': True, 'false': False}).fillna(False)
-
-# Calculate the average 'following' for hireable and non-hireable users
-hireable_avg_following = users_df[users_df['hireable'] == True]['following'].mean()
-non_hireable_avg_following = users_df[users_df['hireable'] == False]['following'].mean()
-
-# Calculate the difference
-following_difference = hireable_avg_following - non_hireable_avg_following
-print(f"Difference in average following (hireable vs. non-hireable): {following_difference:.3f}")
-
-# Ensure 'hireable' column is boolean
-users_df['hireable'] = users_df['hireable'].fillna('').astype(str).str.lower().map({'true': True, 'false': False}).fillna(False)
-
-# Count the fraction of users with email addresses for hireable and non-hireable users
-hireable_with_email = users_df[users_df['hireable'] == True]['email'].notna().mean()
-non_hireable_with_email = users_df[users_df['hireable'] == False]['email'].notna().mean()
-
-# Calculate the difference
-email_fraction_difference = hireable_with_email - non_hireable_with_email
-print(f"Difference in email sharing (hireable vs. non-hireable): {email_fraction_difference:.3f}")
-
-# Ensure 'name' column is clean (ignore missing names)
-users_df['surname'] = users_df['name'].fillna('').str.split().str[-1]
-
 # Get the most common surname(s) and their counts
 most_common_surnames = users_df['surname'].value_counts()
 max_count = most_common_surnames.max()
 common_surnames = most_common_surnames[most_common_surnames == max_count]
-
 # Extract the surnames and their count
 surnames_list = common_surnames.index.tolist()
 surname_count = common_surnames.iloc[0]  # All will have the same count due to the tie
-
 # Print the result
 print(f"Most common surname(s): {', '.join(sorted(surnames_list))}")
 print(f"Number of users with the most common surname: {surname_count}")
